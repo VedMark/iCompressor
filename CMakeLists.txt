@@ -5,6 +5,6 @@ set(CMAKE_C_STANDARD 11)
 
 link_directories(/src/libsoil/)
 
-set (CMAKE_C_FLAGS "-Wall")
+set (CMAKE_C_FLAGS "-Wall -pedantic -Werror")
 add_executable(iCompressor src/main.c src/compressor.c src/include/compressor.h)
 target_link_libraries(iCompressor -lSOIL -lglut -lGL -lGLU -lm )

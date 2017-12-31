@@ -1,5 +1,5 @@
 # iCompressor
-PCA algorithm for compressing an image
+Backpropagation algorithm for compressing an image
 
 ## Getting Started
 
