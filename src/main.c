@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <gsl/gsl_matrix.h>
 #include "include/compressor.h"
 
 
@@ -11,7 +12,7 @@ int main(int argc, char **argv) {
     int ret_value = 0;
     ICMPR_model *pICMPR_model = NULL;
 
-    pICMPR_model = ICMPR_load(argv[1], 1, 1, 2, 0.0001);
+    pICMPR_model = ICMPR_load(argv[1], 8, 8, 48, 256);
     if(NULL == pICMPR_model) {
         fprintf(stderr, "could not load image!\n");
         return 1;
@@ -37,9 +38,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    double cmpr_ratio = (double)(pICMPR_model->X.m * pICMPR_model->X.n) /
-                       ((pICMPR_model->X.m + pICMPR_model->X.n) * pICMPR_model->p + 2);
-    fprintf(stdout, "-- compression ratio: %.4f\n", cmpr_ratio);
+    double cmpr_ratio = (double)(pICMPR_model->X->size2 * pICMPR_model->X->size1)
+                        / ((pICMPR_model->X->size2 * sizeof(float)
+                            + pICMPR_model->X->size1)
+                          * pICMPR_model->p + 2 * sizeof(unsigned long));
+    fprintf(stdout, "-- compression ratio: %.6f\n", cmpr_ratio);
 
     ICMPR_destroy(pICMPR_model);
 
