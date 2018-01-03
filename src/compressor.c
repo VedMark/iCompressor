@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <gsl/gsl_matrix.h>
-#include <gsl/gsl_randist.h>
+#include <stdbool.h>
 #include "include/compressor.h"
 
 #define C_MAX (255)
@@ -19,6 +19,11 @@ image_type restore_image(gsl_matrix *matrix, unsigned long rectM,
 unsigned char restore_value(double value);
 void split_on_blocks(ICMPR_model *model);
 int train_epoch(ICMPR_model *model, gsl_vector *v, double *alpha, double *alpha_);
+
+bool verify_params(ICMPR_model *model,
+                   unsigned long n, unsigned long m,
+                   unsigned long p,
+                   double E_max);
 int update_W(ICMPR_model *model,
              gsl_matrix *X,
              gsl_matrix *delta_X,
@@ -43,11 +48,13 @@ void init_uniform_dist(gsl_matrix *matrix) {
     }
 }
 
-ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
-                        unsigned long p, double E_max) {
-    ICMPR_model *model = malloc(sizeof(ICMPR_model));
-    if(model == NULL) return NULL;
-
+int ICMPR_load(
+        ICMPR_model *model,
+        char *file_name,
+        unsigned long n, unsigned long m,
+        unsigned long p,
+        double E_max)
+{
     model->image.img_data = SOIL_load_image
             (
                     file_name,
@@ -55,8 +62,9 @@ ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
                     SOIL_LOAD_RGB
             );
     if(NULL == model->image.img_data) {
-        return NULL;
+        return IMG_ERR;
     }
+
 
     model->n = n;
     model->m = 3 * m;
@@ -64,16 +72,21 @@ ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
     model->E_max = E_max;
     model->rectM = 3 * model->image.w / model->m;
 
+
+    if(!verify_params(model, n, m, p, E_max)) {
+        return PAR_ERR;
+    }
+
     model->X = gsl_matrix_alloc(model->image.w * model->image.h / (n * m),
                                 3 * n * m);
-    if(NULL == model->X) return NULL;
+    if(NULL == model->X) return MEM_ERR;
 
     model->W = gsl_matrix_alloc(3 * n * m, p);
-    if(NULL == model->W) return NULL;
+    if(NULL == model->W) return MEM_ERR;
     init_uniform_dist(model->W);
 
     model->W_astric = gsl_matrix_alloc(p, 3 * n * m);
-    if(NULL == model->W_astric) return NULL;
+    if(NULL == model->W_astric) return MEM_ERR;
 
     for(size_t i = 0; i < model->W_astric->size1; ++i) {
         for(size_t j = 0; j < model->W_astric->size2; ++j) {
@@ -86,7 +99,7 @@ ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
 
     fprintf(stdout, "-- model initialized with the image: %s\n", file_name);
 
-    return model;
+    return SUCCESS;
 }
 
 void split_on_blocks(ICMPR_model *model) {
@@ -199,7 +212,7 @@ int ICMPR_train(ICMPR_model *model) {
     return SUCCESS;
 }
 
-int train_epoch(register ICMPR_model *model,
+int train_epoch(ICMPR_model *model,
                 gsl_vector *v,
                 double *alpha,
                 double *alpha_) {
@@ -249,7 +262,27 @@ double adaptive_step(gsl_vector *vector) {
         sum += pow(gsl_vector_get(vector, j), 2);
     }
 
-    return 1. / (sum + 1000);
+    return 1. / (sum + 100);
+}
+
+bool verify_params(ICMPR_model *model,
+                   unsigned long n, unsigned long m,
+                   unsigned long p,
+                   double E_max)
+{
+    if(0 >= n || n > model->image.h)
+        return false;
+
+    if(0 >= m || m > model->image.w)
+        return false;
+
+    if(0 >= p || p > 2 * model->n * model->m)
+        return false;
+
+    if(0 >= E_max)
+        return false;
+
+    return true;
 }
 
 int update_W(ICMPR_model *model,
@@ -359,13 +392,14 @@ int ICMPR_restore(ICMPR_model *model, char *file_name) {
                                         model->n,
                                         model->m);
 
-    SOIL_save_image
+    ret_val = SOIL_save_image
             (
                     file_name,
                     SOIL_SAVE_TYPE_BMP,
                     cmpr_img.w, cmpr_img.h, cmpr_img.channels,
                     cmpr_img.img_data
             );
+    if(0 == ret_val) return IMG_ERR;
 
     printf("-- the image is restored to the file: %s\n", file_name);
 

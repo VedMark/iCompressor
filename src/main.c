@@ -4,23 +4,27 @@
 
 
 void print_help() {
-    printf("Usage: iCompressor <filename> <n> <m> <p> <E_max>\n"
+    printf("Usage: iCompressor <input> <output> <n> <m> <p> <E_max>\n"
                    "   or: iCompressor --help\n\n"
-                   "  filename\tan image file to be compressed\n"
+                   "  input\t\tan image file name to be compressed\n"
+                   "  output\tan image file name for restored image.\n"
+                   "\t\t  Has .bmp format\n"
                    "  n\t\theight of the rectangle that splits the\n"
                    "\t\t  image into input vectors. The height must be\n"
-                   "\t\t  divided by the number\n"
+                   "\t\t  divided by the number (0 < n <= h)\n"
                    "  m\t\tthe width of the rectangle that splits the\n"
                    "\t\t  image into input vectors. The number must must be\n"
-                   "\t\t  divided by the number\n"
+                   "\t\t  divided by the number (0 < m <= w)\n"
                    "  p\t\tnumber of neurones in the hidden layer\n"
+                   "\t\t  (0 < p <= 6*m*n)\n"
                    "  E_max\t\tmaximum standard error. Training ends when\n"
-                   "\t\t  standard error on an epoch becomes less than E_max\n");
+                   "\t\t  standard error on an epoch becomes less than E_max\n"
+                   "\t\t  (0 < E_max <= 0.1*p\n");
 }
 
 int main(int argc, char **argv) {
-    const char *usage = "%s: usage: %s <filename> <n> <m> <p> <E_max>\n";
-    if(!(argc == 2 || argc == 6)){
+    const char *usage = "%s: usage: %s <input> <output> <n> <m> <p> <E_max>\n";
+    if(!(argc == 2 || argc == 7)){
         printf(usage, argv[0], argv[0]);
         return 1;
     }
@@ -42,14 +46,23 @@ int main(int argc, char **argv) {
     double E_max = 0;
     int ret_value = 0;
 
-    n = strtoul(argv[2], NULL, 10);
-    m = strtoul(argv[3], NULL, 10);
-    p = strtoul(argv[4], NULL, 10);
-    E_max = strtod(argv[5], NULL);
+    n = strtoul(argv[3], NULL, 10);
+    m = strtoul(argv[4], NULL, 10);
+    p = strtoul(argv[5], NULL, 10);
+    E_max = strtod(argv[6], NULL);
 
-    pICMPR_model = ICMPR_load(argv[1], n, m, p, E_max);
-    if(NULL == pICMPR_model) {
-        fprintf(stderr, "could not load image!\n");
+    pICMPR_model = malloc(sizeof(ICMPR_model));
+    ret_value = ICMPR_load(pICMPR_model, argv[1], n, m, p, E_max);
+    if(MEM_ERR == ret_value) {
+        fprintf(stderr, "internal memory error!\n");
+        return 1;
+    }
+    if(IMG_ERR == ret_value) {
+        fprintf(stderr, "could not load the image!\n");
+        return 1;
+    }
+    if(PAR_ERR == ret_value) {
+        fprintf(stderr, "parameter(s) has wrong value!\n");
         return 1;
     }
 
@@ -63,9 +76,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    ret_value = ICMPR_restore(pICMPR_model, "imgg_out_restored.png");
+    ret_value = ICMPR_restore(pICMPR_model, argv[2]);
     if(MEM_ERR == ret_value) {
         fprintf(stderr, "internal memory error!\n");
+        return 1;
+    }
+    if(IMG_ERR == ret_value) {
+        fprintf(stderr, "could not save the image!\n");
         return 1;
     }
     if(ALG_ERR == ret_value) {
@@ -74,7 +91,7 @@ int main(int argc, char **argv) {
     }
 
     double cmpr_ratio = (double)(pICMPR_model->X->size2 * pICMPR_model->X->size1)
-                        / ((pICMPR_model->X->size2 * sizeof(float)
+                        / ((pICMPR_model->X->size2 * sizeof(double)
                             + pICMPR_model->X->size1)
                           * pICMPR_model->p + 2 * sizeof(unsigned long));
     fprintf(stdout, "-- compression ratio: %.6f\n", cmpr_ratio);

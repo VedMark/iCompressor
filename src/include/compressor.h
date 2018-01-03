@@ -6,6 +6,8 @@
 
 #define MEM_ERR (1)
 #define ALG_ERR (-1)
+#define IMG_ERR (-2)
+#define PAR_ERR (-3)
 #define SUCCESS (0)
 
 typedef struct image_type {
@@ -28,7 +30,16 @@ typedef struct ICMPR_model {
 } ICMPR_model;
 
 
-ICMPR_model * ICMPR_load(char *file_name, unsigned long n, unsigned long m, unsigned long p, double E_max);
+int
+ICMPR_load
+        (
+                ICMPR_model *model,
+                char *file_name,
+                unsigned long n, unsigned long m,
+                unsigned long p,
+                double E_max
+        );
+
 void ICMPR_destroy(ICMPR_model *model);
 int ICMPR_train(ICMPR_model *model);
 int ICMPR_restore(ICMPR_model *model, char *file_name);
