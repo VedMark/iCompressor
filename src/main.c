@@ -1,18 +1,53 @@
 #include <stdio.h>
-#include <gsl/gsl_matrix.h>
+#include <string.h>
 #include "include/compressor.h"
 
 
+void print_help() {
+    printf("Usage: iCompressor <filename> <n> <m> <p> <E_max>\n"
+                   "   or: iCompressor --help\n\n"
+                   "  filename\timage file to be compressed\n"
+                   "  n\t\t\tthe height of the rectangle that divides the\n"
+                   "\t\t\timage into input vectors. The number must be left\n"
+                   "\t\t\twithout any difference to the height of the image\n"
+                   "  m\t\t\tthe width of the rectangle that divides the\n"
+                   "\t\t\timage into input vectors. The number must be left\n"
+                   "\t\t\twithout any difference to the height of the image\n"
+                   "  p\t\t\tnumber of nerones in hidden layer\n"
+                   "  E_max\t\tmaximum standard error. Training ends when\n"
+                   "\t\t\tstandard error on the epoch becomes less than E_max\n");
+}
+
 int main(int argc, char **argv) {
-    if(argc < 2){
-        printf("%s: usage: %s <filename> <filename>\n", argv[0], argv[0]);
+    const char *usage = "%s: usage: %s <filename> <n> <m> <p> <E_max>\n";
+    if(!(argc == 2 || argc == 6)){
+        printf(usage, argv[0], argv[0]);
         return 1;
     }
 
-    int ret_value = 0;
-    ICMPR_model *pICMPR_model = NULL;
+    if (argc == 2) {
+        if (!strcmp(argv[1], "--help")) {
+            print_help();
+            return 0;
+        } else {
+            printf(usage, argv[0], argv[0]);
+            return 1;
+        }
+    }
 
-    pICMPR_model = ICMPR_load(argv[1], 8, 8, 48, 256);
+    ICMPR_model *pICMPR_model = NULL;
+    unsigned long n = 0;
+    unsigned long m = 0;
+    unsigned long p = 0;
+    double E_max = 0;
+    int ret_value = 0;
+
+    n = strtoul(argv[2], NULL, 10);
+    m = strtoul(argv[3], NULL, 10);
+    p = strtoul(argv[4], NULL, 10);
+    E_max = strtod(argv[5], NULL);
+
+    pICMPR_model = ICMPR_load(argv[1], n, m, p, E_max);
     if(NULL == pICMPR_model) {
         fprintf(stderr, "could not load image!\n");
         return 1;

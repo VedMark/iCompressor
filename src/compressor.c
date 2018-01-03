@@ -38,7 +38,7 @@ void init_uniform_dist(gsl_matrix *matrix) {
 
     for(size_t i = 0; i < matrix->size1; ++i) {
         for(size_t j = 0; j < matrix->size2; ++j) {
-            gsl_matrix_set(matrix, i, j, gsl_ran_flat(r, -1, 1));
+            gsl_matrix_set(matrix, i, j, gsl_ran_flat(r, -.1, .1));
         }
     }
     gsl_rng_free(r);
@@ -142,7 +142,7 @@ void ICMPR_destroy(ICMPR_model *model) {
     free(model);
 }
 
-double summary_deviation(ICMPR_model *model) {
+double summary_error(ICMPR_model *model) {
     gsl_matrix *Y = NULL;
     gsl_matrix *X_astric = NULL;
     double dev = 0;
@@ -169,7 +169,7 @@ double summary_deviation(ICMPR_model *model) {
 
 int ICMPR_train(ICMPR_model *model) {
     int ret_val = 0;
-    double dev = 0;
+    double error = 0;
     gsl_vector *row = NULL;
     double alpha = 0;
     double alpha_ = 0;
@@ -190,11 +190,11 @@ int ICMPR_train(ICMPR_model *model) {
             if(ALG_ERR == ret_val) return ALG_ERR;
         }
 
-        dev = summary_deviation(model);
+        error = summary_error(model);
 
-        printf("step: %d; alpha: %.6lf; alpha': %.6lf; deviation: %.6lf\n",
-               step++, alpha, alpha_, dev);
-    } while(dev >= model->E_max);
+        printf("step: %d; alpha: %.6lf; alpha': %.6lf; error: %.6lf\n",
+               step++, alpha, alpha_, error);
+    } while(error >= model->E_max);
 
     gsl_vector_free(row);
     return SUCCESS;
@@ -250,7 +250,7 @@ double adaptive_step(gsl_vector *vector) {
         sum += pow(gsl_vector_get(vector, j), 2);
     }
 
-    return 1. / (sum + 100);
+    return 1. / (sum + 1000);
 }
 
 int update_W(ICMPR_model *model,

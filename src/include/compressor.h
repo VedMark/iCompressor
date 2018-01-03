@@ -15,12 +15,6 @@ typedef struct image_type {
     int channels;
 } image_type;
 
-typedef struct matrix_type {
-    float **values;
-    unsigned long n;
-    unsigned long m;
-} matrix_type;
-
 typedef struct ICMPR_model {
     image_type image;
     gsl_matrix *X;
