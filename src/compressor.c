@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
-#include <time.h>
 #include "include/compressor.h"
 
 #define C_MAX (255)
@@ -11,16 +10,14 @@
 double adaptive_step(gsl_vector *vector);
 unsigned char *at(image_type *image, int i, int j);
 
-void init_normal_dist(gsl_matrix *matrix);
 void init_uniform_dist(gsl_matrix *matrix);
-
 void normalize(gsl_matrix *matrix);
 double normalize_value(unsigned char value);
 image_type restore_image(gsl_matrix *matrix, unsigned long rectM,
                          unsigned long n, unsigned long m);
 unsigned char restore_value(double value);
 void split_on_blocks(ICMPR_model *model);
-int train_step(ICMPR_model *model, gsl_vector *X, double *alpha, double *alpha_);
+int train_step(ICMPR_model *model, gsl_vector *v, double *alpha, double *alpha_);
 int update_W(ICMPR_model *model,
              gsl_matrix *X,
              gsl_matrix *delta_X,
@@ -35,25 +32,13 @@ unsigned char *at(image_type *image, int i, int j) {
     return image->img_data + i * image->w * 3 + j;
 }
 
-void init_normal_dist(gsl_matrix *matrix) {
-    gsl_rng_env_setup();
-    gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
-
-    for(size_t i = 0; i < matrix->size1; ++i) {
-        for(size_t j = 0; j < matrix->size2; ++j) {
-            gsl_matrix_set(matrix, i, j, gsl_ran_gaussian(r, .1));
-        }
-    }
-    gsl_rng_free(r);
-}
-
 void init_uniform_dist(gsl_matrix *matrix) {
     gsl_rng_env_setup();
     gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
 
     for(size_t i = 0; i < matrix->size1; ++i) {
         for(size_t j = 0; j < matrix->size2; ++j) {
-            gsl_matrix_set(matrix, i, j, gsl_ran_flat(r, -.2, .2));
+            gsl_matrix_set(matrix, i, j, gsl_ran_flat(r, -1, 1));
         }
     }
     gsl_rng_free(r);
@@ -158,8 +143,8 @@ void ICMPR_destroy(ICMPR_model *model) {
 }
 
 double summary_deviation(ICMPR_model *model) {
-    gsl_matrix *Y;
-    gsl_matrix *X_astric;
+    gsl_matrix *Y = NULL;
+    gsl_matrix *X_astric = NULL;
     double dev = 0;
 
     Y = gsl_matrix_alloc(model->X->size1, model->W->size2);
@@ -248,8 +233,8 @@ int train_step(register ICMPR_model *model,
     if(MEM_ERR == update_W(model, X, X_, alpha)) return MEM_ERR;
     if(MEM_ERR == update_W_astric(model, Y, X_, alpha_)) return MEM_ERR;
 
-//    normalize(model->W);
-//    normalize(model->W_astric);
+    normalize(model->W);
+    normalize(model->W_astric);
 
     gsl_matrix_free(X);
     gsl_matrix_free(Y);
@@ -262,7 +247,7 @@ double adaptive_step(gsl_vector *vector) {
     float sum = 0;
 
     for(size_t j = 0; j < vector->size; ++j) {
-        sum += gsl_vector_get(vector, j);
+        sum += pow(gsl_vector_get(vector, j), 2);
     }
 
     return 1. / (sum + 100);
@@ -313,7 +298,6 @@ int update_W_astric(ICMPR_model *model,
                     gsl_matrix *delta_X,
                     double *alpha) {
 
-
     gsl_matrix *Y_deltaX = NULL;
     int ret_val = 0;
 
@@ -356,8 +340,8 @@ void normalize(gsl_matrix *matrix) {
 }
 
 int ICMPR_restore(ICMPR_model *model, char *file_name) {
-    gsl_matrix *Y;
-    gsl_matrix *X_astric;
+    gsl_matrix *Y = NULL;
+    gsl_matrix *X_astric = NULL;
     int ret_val = 0;
 
     Y = gsl_matrix_alloc(model->X->size1, model->W->size2);
