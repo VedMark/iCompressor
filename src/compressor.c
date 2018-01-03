@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
 #include "include/compressor.h"
@@ -33,15 +34,13 @@ unsigned char *at(image_type *image, int i, int j) {
 }
 
 void init_uniform_dist(gsl_matrix *matrix) {
-    gsl_rng_env_setup();
-    gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
+    srand((unsigned int) time(NULL));
 
     for(size_t i = 0; i < matrix->size1; ++i) {
         for(size_t j = 0; j < matrix->size2; ++j) {
-            gsl_matrix_set(matrix, i, j, gsl_ran_flat(r, -.1, .1));
+            gsl_matrix_set(matrix, i, j, 1. * rand() / RAND_MAX * 2 - 1);
         }
     }
-    gsl_rng_free(r);
 }
 
 ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
