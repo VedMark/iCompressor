@@ -4,8 +4,9 @@ Backpropagation algorithm for compressing an image
 ## Getting Started
 
 ### Prerequisites
-  - gcc compiler
-  - openGL library
+  - C Compiler
+  - openGL Library
+  - GNU Scientific Library
   
 ### Installing
 
@@ -19,5 +20,6 @@ make
 
 To get help about using an utility type
 ```
-iCompressor -h
+iCompressor --help
 ```
+
