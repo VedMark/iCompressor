@@ -18,7 +18,7 @@ make
 
 ### Using
 
-To get help about using an utility type
+To get help about using the utility type
 ```
 iCompressor --help
 ```

@@ -6,16 +6,16 @@
 void print_help() {
     printf("Usage: iCompressor <filename> <n> <m> <p> <E_max>\n"
                    "   or: iCompressor --help\n\n"
-                   "  filename\timage file to be compressed\n"
-                   "  n\t\t\tthe height of the rectangle that divides the\n"
-                   "\t\t\timage into input vectors. The number must be left\n"
-                   "\t\t\twithout any difference to the height of the image\n"
-                   "  m\t\t\tthe width of the rectangle that divides the\n"
-                   "\t\t\timage into input vectors. The number must be left\n"
-                   "\t\t\twithout any difference to the height of the image\n"
-                   "  p\t\t\tnumber of nerones in hidden layer\n"
+                   "  filename\tan image file to be compressed\n"
+                   "  n\t\theight of the rectangle that splits the\n"
+                   "\t\t  image into input vectors. The height must be\n"
+                   "\t\t  divided by the number\n"
+                   "  m\t\tthe width of the rectangle that splits the\n"
+                   "\t\t  image into input vectors. The number must must be\n"
+                   "\t\t  divided by the number\n"
+                   "  p\t\tnumber of neurones in the hidden layer\n"
                    "  E_max\t\tmaximum standard error. Training ends when\n"
-                   "\t\t\tstandard error on the epoch becomes less than E_max\n");
+                   "\t\t  standard error on an epoch becomes less than E_max\n");
 }
 
 int main(int argc, char **argv) {

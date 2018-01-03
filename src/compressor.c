@@ -17,7 +17,7 @@ image_type restore_image(gsl_matrix *matrix, unsigned long rectM,
                          unsigned long n, unsigned long m);
 unsigned char restore_value(double value);
 void split_on_blocks(ICMPR_model *model);
-int train_step(ICMPR_model *model, gsl_vector *v, double *alpha, double *alpha_);
+int train_epoch(ICMPR_model *model, gsl_vector *v, double *alpha, double *alpha_);
 int update_W(ICMPR_model *model,
              gsl_matrix *X,
              gsl_matrix *delta_X,
@@ -85,7 +85,7 @@ ICMPR_model *ICMPR_load(char *file_name, unsigned long n, unsigned long m,
 
     split_on_blocks(model);
 
-    fprintf(stdout, "-- model initialized with image: %s\n", file_name);
+    fprintf(stdout, "-- model initialized with the image: %s\n", file_name);
 
     return model;
 }
@@ -173,11 +173,11 @@ int ICMPR_train(ICMPR_model *model) {
     gsl_vector *row = NULL;
     double alpha = 0;
     double alpha_ = 0;
-    int step = 1;
+    int epoch = 1;
 
     row = gsl_vector_alloc(model->X->size2);
 
-    printf("-- training model\n");
+    printf("-- training the model\n");
 
     normalize(model->W);
     normalize(model->W_astric);
@@ -185,25 +185,25 @@ int ICMPR_train(ICMPR_model *model) {
     do {
         for(size_t i = 0; i < model->X->size1; ++i) {
             gsl_matrix_get_row(row, model->X, i);
-            ret_val = train_step(model, row, &alpha, &alpha_);
+            ret_val = train_epoch(model, row, &alpha, &alpha_);
             if(MEM_ERR == ret_val) return MEM_ERR;
             if(ALG_ERR == ret_val) return ALG_ERR;
         }
 
         error = summary_error(model);
 
-        printf("step: %d; alpha: %.6lf; alpha': %.6lf; error: %.6lf\n",
-               step++, alpha, alpha_, error);
+        printf("epoch: %d; alpha: %.6lf; alpha': %.6lf; error: %.6lf\n",
+               epoch++, alpha, alpha_, error);
     } while(error >= model->E_max);
 
     gsl_vector_free(row);
     return SUCCESS;
 }
 
-int train_step(register ICMPR_model *model,
-               gsl_vector *v,
-               double *alpha,
-               double *alpha_) {
+int train_epoch(register ICMPR_model *model,
+                gsl_vector *v,
+                double *alpha,
+                double *alpha_) {
 
     gsl_matrix *X = NULL;
     gsl_matrix *Y = NULL;
@@ -368,7 +368,7 @@ int ICMPR_restore(ICMPR_model *model, char *file_name) {
                     cmpr_img.img_data
             );
 
-    printf("-- image restored to file: %s\n", file_name);
+    printf("-- the image is restored to the file: %s\n", file_name);
 
     gsl_matrix_free(Y);
     gsl_matrix_free(X_astric);
