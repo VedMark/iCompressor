@@ -26,19 +26,15 @@ typedef struct ICMPR_model {
     unsigned long n;
     unsigned long m;
     unsigned long p;
+    unsigned long F;
     double E_max;
 } ICMPR_model;
 
 
 int
 ICMPR_load
-        (
-                ICMPR_model *model,
-                char *file_name,
-                unsigned long n, unsigned long m,
-                unsigned long p,
-                double E_max
-        );
+        (ICMPR_model *model, char *file_name, unsigned long n, unsigned long m, unsigned long p, double E_max,
+                       unsigned long F);
 
 void ICMPR_destroy(ICMPR_model *model);
 int ICMPR_train(ICMPR_model *model);

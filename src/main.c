@@ -4,7 +4,7 @@
 
 
 void print_help() {
-    printf("Usage: iCompressor <input> <output> <n> <m> <p> <E_max>\n"
+    printf("Usage: iCompressor <input> <output> <n> <m> <p> <E_max> <F>\n"
                    "   or: iCompressor --help\n\n"
                    "  input\t\tan image file name to be compressed\n"
                    "  output\tan image file name for restored image.\n"
@@ -17,14 +17,15 @@ void print_help() {
                    "\t\t  divided by the number (0 < m <= w)\n"
                    "  p\t\tnumber of neurones in the hidden layer\n"
                    "\t\t  (0 < p <= 6*m*n)\n"
+                   "  F\t\tvalue to scale adaptive step\n"
                    "  E_max\t\tmaximum standard error. Training ends when\n"
                    "\t\t  standard error on an epoch becomes less than E_max\n"
                    "\t\t  (0 < E_max <= 0.1*p\n");
 }
 
 int main(int argc, char **argv) {
-    const char *usage = "%s: usage: %s <input> <output> <n> <m> <p> <E_max>\n";
-    if(!(argc == 2 || argc == 7)){
+    const char *usage = "%s: usage: %s <input> <output> <n> <m> <p> <E_max> <F>\n";
+    if(!(argc == 2 || argc == 8)){
         printf(usage, argv[0], argv[0]);
         return 1;
     }
@@ -43,6 +44,7 @@ int main(int argc, char **argv) {
     unsigned long n = 0;
     unsigned long m = 0;
     unsigned long p = 0;
+    unsigned long F = 0;
     double E_max = 0;
     int ret_value = 0;
 
@@ -50,9 +52,10 @@ int main(int argc, char **argv) {
     m = strtoul(argv[4], NULL, 10);
     p = strtoul(argv[5], NULL, 10);
     E_max = strtod(argv[6], NULL);
+    F = strtoul(argv[7], NULL, 10);
 
     pICMPR_model = malloc(sizeof(ICMPR_model));
-    ret_value = ICMPR_load(pICMPR_model, argv[1], n, m, p, E_max);
+    ret_value = ICMPR_load(pICMPR_model, argv[1], n, m, p, E_max, F);
     if(MEM_ERR == ret_value) {
         fprintf(stderr, "internal memory error!\n");
         return 1;

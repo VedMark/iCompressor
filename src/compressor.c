@@ -8,7 +8,7 @@
 
 #define C_MAX (255)
 
-double adaptive_step(gsl_vector *vector);
+double adaptive_step(gsl_vector *vector, unsigned long F);
 unsigned char *at(image_type *image, int i, int j);
 
 void init_uniform_dist(gsl_matrix *matrix);
@@ -48,12 +48,11 @@ void init_uniform_dist(gsl_matrix *matrix) {
     }
 }
 
-int ICMPR_load(
-        ICMPR_model *model,
-        char *file_name,
-        unsigned long n, unsigned long m,
-        unsigned long p,
-        double E_max)
+int ICMPR_load(ICMPR_model *model,
+               char *file_name,
+               unsigned long n, unsigned long m,
+               unsigned long p, double E_max,
+               unsigned long F)
 {
     model->image.img_data = SOIL_load_image
             (
@@ -70,6 +69,7 @@ int ICMPR_load(
     model->m = 3 * m;
     model->p = p;
     model->E_max = E_max;
+    model->F = F;
     model->rectM = 3 * model->image.w / model->m;
 
 
@@ -255,14 +255,14 @@ int train_epoch(ICMPR_model *model,
     return SUCCESS;
 }
 
-double adaptive_step(gsl_vector *vector) {
+double adaptive_step(gsl_vector *vector, unsigned long F) {
     float sum = 0;
 
     for(size_t j = 0; j < vector->size; ++j) {
         sum += pow(gsl_vector_get(vector, j), 2);
     }
 
-    return 1. / (sum + 100);
+    return 1. / (sum + F);
 }
 
 bool verify_params(ICMPR_model *model,
@@ -310,7 +310,7 @@ int update_W(ICMPR_model *model,
     gsl_vector *row = NULL;
     row = gsl_vector_alloc(X->size2);
     gsl_matrix_get_row(row, X, 0);
-    *alpha = adaptive_step(row);
+    *alpha = adaptive_step(row, model->F);
 
     ret_val = gsl_matrix_scale(X_deltaX_W, *alpha);
     if(0 != ret_val) return ALG_ERR;
@@ -343,7 +343,7 @@ int update_W_astric(ICMPR_model *model,
     gsl_vector *row = NULL;
     row = gsl_vector_alloc(Y->size2);
     gsl_matrix_get_row(row, Y, 0);
-    *alpha = adaptive_step(row);
+    *alpha = adaptive_step(row, model->F);
 
     ret_val = gsl_matrix_scale(Y_deltaX, *alpha);
     if(0 != ret_val) return ALG_ERR;
